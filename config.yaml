@@ -23,7 +23,7 @@ categories:
 
   - name: wind
     enabled: true
-    url: "https://www.windy.com/-Menu/menu?42.158,-85.504,8"
+    url: "https://www.windy.com/-Wind/wind?42.158,-85.504,8"
     schedule_interval_minutes: 5
     animation_frames: 10
     animation_frame_interval_ms: 500
