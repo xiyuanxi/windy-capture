@@ -27,19 +27,21 @@ async def main() -> None:
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
         logger.info("Browser launched")
+        scheduler = build_scheduler(config, browser, uploader)
         try:
-            scheduler = build_scheduler(config, browser, uploader)
             scheduler.start()
             logger.info("Scheduler started. Press Ctrl+C to stop.")
             while True:
                 await asyncio.sleep(60)
-        except (KeyboardInterrupt, SystemExit):
+        finally:
             logger.info("Shutting down scheduler...")
             scheduler.shutdown()
-        finally:
             await browser.close()
             logger.info("Browser closed")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Interrupted by user")
