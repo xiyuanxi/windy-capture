@@ -103,4 +103,4 @@ async def test_capture_burst_frames_calls_locator_correctly():
     await capture_burst_frames(mock_page, num_frames=3, interval_ms=10)
     assert mock_page.locator.call_count == 3
     for call in mock_page.locator.call_args_list:
-        assert call[0][0] == "canvas#map"
+        assert call[0][0] == "canvas.maplibregl-canvas"

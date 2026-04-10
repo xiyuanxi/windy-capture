@@ -22,7 +22,7 @@ async def capture_category(
     try:
         page = await context.new_page()
         await page.goto(category.url, wait_until="networkidle", timeout=60000)
-        await page.wait_for_selector("canvas#map", timeout=30000)
+        await page.wait_for_selector("canvas.maplibregl-canvas", timeout=30000)
         await asyncio.sleep(global_cfg.wait_after_load_seconds)
 
         now = datetime.now(timezone.utc)
@@ -30,7 +30,7 @@ async def capture_category(
         timestamp = now.strftime("%H-%M-%S")
 
         # Always capture one static frame
-        static_bytes = await page.locator("canvas#map").screenshot()
+        static_bytes = await page.locator("canvas.maplibregl-canvas").screenshot()
         key = uploader.upload_static(static_bytes, category=category.name, timestamp=timestamp, date_str=date_str)
         logger.info("Uploaded static frame: %s", key)
 

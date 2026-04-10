@@ -87,7 +87,7 @@ async def test_capture_waits_for_canvas(mock_browser, mock_page, mock_uploader):
 
         await capture_category(mock_browser, cat, global_cfg, mock_uploader)
 
-    mock_page.wait_for_selector.assert_called_once_with("canvas#map", timeout=30000)
+    mock_page.wait_for_selector.assert_called_once_with("canvas.maplibregl-canvas", timeout=30000)
 
 
 @pytest.mark.asyncio

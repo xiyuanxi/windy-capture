@@ -19,9 +19,9 @@ def compute_pixel_diff_ratio(img1_bytes: bytes, img2_bytes: bytes) -> float:
 
 async def is_animated(page, threshold: float) -> bool:
     """Return True if the canvas is animating (pixel diff ratio exceeds threshold)."""
-    frame1 = await page.locator("canvas#map").screenshot()
+    frame1 = await page.locator("canvas.maplibregl-canvas").screenshot()
     await asyncio.sleep(0.3)
-    frame2 = await page.locator("canvas#map").screenshot()
+    frame2 = await page.locator("canvas.maplibregl-canvas").screenshot()
     ratio = compute_pixel_diff_ratio(frame1, frame2)
     return bool(ratio > threshold)
 
@@ -30,7 +30,7 @@ async def capture_burst_frames(page, num_frames: int, interval_ms: int) -> List[
     """Capture num_frames screenshots with interval_ms between each."""
     frames = []
     for _ in range(num_frames):
-        frame = await page.locator("canvas#map").screenshot()
+        frame = await page.locator("canvas.maplibregl-canvas").screenshot()
         frames.append(frame)
         await asyncio.sleep(interval_ms / 1000.0)
     return frames
