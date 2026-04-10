@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from playwright.async_api import Browser
 
@@ -23,6 +25,7 @@ def build_scheduler(
             args=[browser, category, config.global_, uploader],
             id=f"capture_{category.name}",
             max_instances=1,
+            next_run_time=datetime.now(timezone.utc),
         )
 
     return scheduler
