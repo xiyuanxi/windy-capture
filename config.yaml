@@ -1,0 +1,29 @@
+global:
+  wait_after_load_seconds: 5
+  animation_detection_threshold: 0.5
+
+s3:
+  bucket: "your-bucket"
+  prefix: "windy-capture"
+
+categories:
+  - name: radar
+    enabled: true
+    url: "https://www.windy.com/-Radar/radar?42.158,-85.504,8"
+    schedule_interval_minutes: 5
+    animation_frames: 12
+    animation_frame_interval_ms: 500
+
+  - name: satellite
+    enabled: true
+    url: "https://www.windy.com/-Satellite/satellite?42.158,-85.504,8"
+    schedule_interval_minutes: 10
+    animation_frames: 8
+    animation_frame_interval_ms: 600
+
+  - name: wind
+    enabled: true
+    url: "https://www.windy.com/-Menu/menu?42.158,-85.504,8"
+    schedule_interval_minutes: 5
+    animation_frames: 10
+    animation_frame_interval_ms: 500
