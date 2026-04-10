@@ -21,7 +21,7 @@ async def capture_category(
     context = await browser.new_context()
     try:
         page = await context.new_page()
-        await page.goto(category.url, wait_until="networkidle", timeout=60000)
+        await page.goto(category.url, wait_until="load", timeout=60000)
         await page.wait_for_selector("canvas.maplibregl-canvas", timeout=30000)
         await asyncio.sleep(global_cfg.wait_after_load_seconds)
 
