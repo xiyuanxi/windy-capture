@@ -18,7 +18,10 @@ async def capture_category(
     uploader: S3Uploader,
 ) -> None:
     logger.info("Starting capture for category: %s", category.name)
-    context = await browser.new_context()
+    context = await browser.new_context(
+        viewport={"width": global_cfg.viewport_width, "height": global_cfg.viewport_height},
+        device_scale_factor=global_cfg.device_scale_factor,
+    )
     try:
         page = await context.new_page()
         await page.goto(category.url, wait_until="load", timeout=60000)

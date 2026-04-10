@@ -1,29 +1,32 @@
 global:
   wait_after_load_seconds: 5
   animation_detection_threshold: 0.5
+  viewport_width: 1920
+  viewport_height: 1080
+  device_scale_factor: 1.0
 
 s3:
-  bucket: "your-bucket"
+  bucket: "virtual-trading-995370108639-us-east-2-an"
   prefix: "windy-capture"
 
 categories:
   - name: radar
     enabled: true
-    url: "https://www.windy.com/-Radar/radar?42.158,-85.504,8"
+    url: "https://www.windy.com/-Radar/radar?42.792,-80.753,7"
     schedule_interval_minutes: 5
     animation_frames: 12
     animation_frame_interval_ms: 500
 
   - name: satellite
     enabled: true
-    url: "https://www.windy.com/-Satellite/satellite?42.158,-85.504,8"
+    url: "https://www.windy.com/-Satellite/satellite?42.792,-80.753,7"
     schedule_interval_minutes: 10
     animation_frames: 8
     animation_frame_interval_ms: 600
 
   - name: wind
     enabled: true
-    url: "https://www.windy.com/-Wind/wind?42.158,-85.504,8"
+    url: "https://www.windy.com/-Wind/wind?42.792,-80.753,7"
     schedule_interval_minutes: 5
     animation_frames: 10
     animation_frame_interval_ms: 500

@@ -7,6 +7,9 @@ import yaml
 class GlobalConfig:
     wait_after_load_seconds: int = 5
     animation_detection_threshold: float = 0.5
+    viewport_width: int = 1920
+    viewport_height: int = 1080
+    device_scale_factor: float = 1.0
 
 
 @dataclass
@@ -43,6 +46,9 @@ def load_config(path: str = "config.yaml") -> Config:
     global_cfg = GlobalConfig(
         wait_after_load_seconds=g.get("wait_after_load_seconds", 5),
         animation_detection_threshold=g.get("animation_detection_threshold", 0.5),
+        viewport_width=g.get("viewport_width", 1920),
+        viewport_height=g.get("viewport_height", 1080),
+        device_scale_factor=g.get("device_scale_factor", 1.0),
     )
 
     s = data["s3"]
