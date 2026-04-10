@@ -70,7 +70,7 @@ async def test_capture_opens_url(mock_browser, mock_page, mock_uploader):
             await capture_category(mock_browser, cat, global_cfg, mock_uploader)
 
     mock_page.goto.assert_called_once_with(
-        cat.url, wait_until="networkidle", timeout=60000
+        cat.url, wait_until="load", timeout=60000
     )
 
 
