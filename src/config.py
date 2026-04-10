@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List
 import yaml
 
@@ -36,6 +36,9 @@ def load_config(path: str = "config.yaml") -> Config:
     with open(path) as f:
         data = yaml.safe_load(f)
 
+    if "s3" not in data:
+        raise ValueError("config.yaml is missing required section: 's3'")
+
     g = data.get("global", {})
     global_cfg = GlobalConfig(
         wait_after_load_seconds=g.get("wait_after_load_seconds", 5),
@@ -50,6 +53,10 @@ def load_config(path: str = "config.yaml") -> Config:
 
     categories = []
     for c in data.get("categories", []):
+        if "name" not in c:
+            raise ValueError(f"A category in config.yaml is missing required field: 'name'")
+        if "url" not in c:
+            raise ValueError(f"Category '{c.get('name', '?')}' is missing required field: 'url'")
         categories.append(CategoryConfig(
             name=c["name"],
             url=c["url"],

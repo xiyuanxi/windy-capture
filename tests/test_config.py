@@ -1,7 +1,6 @@
 import pytest
 import tempfile
 import os
-import yaml
 from src.config import load_config, Config, CategoryConfig, GlobalConfig, S3Config
 
 
@@ -99,5 +98,45 @@ categories:
         assert cat.schedule_interval_minutes == 5
         assert cat.animation_frames == 10
         assert cat.animation_frame_interval_ms == 500
+    finally:
+        os.unlink(path)
+
+
+def test_missing_s3_section_raises_error():
+    yaml_content = """
+global:
+  wait_after_load_seconds: 5
+  animation_detection_threshold: 0.5
+categories:
+  - name: wind
+    url: "https://www.windy.com/wind"
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        f.write(yaml_content)
+        path = f.name
+    try:
+        with pytest.raises(ValueError, match="s3"):
+            load_config(path)
+    finally:
+        os.unlink(path)
+
+
+def test_category_missing_url_raises_error():
+    yaml_content = """
+global:
+  wait_after_load_seconds: 5
+  animation_detection_threshold: 0.5
+s3:
+  bucket: "b"
+  prefix: "p"
+categories:
+  - name: radar
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        f.write(yaml_content)
+        path = f.name
+    try:
+        with pytest.raises(ValueError, match="url"):
+            load_config(path)
     finally:
         os.unlink(path)
