@@ -2,7 +2,7 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 
-from playwright.async_api import Browser
+from playwright.async_api import BrowserContext
 
 from src.animation import capture_burst_frames, is_animated
 from src.config import CategoryConfig, GlobalConfig
@@ -12,18 +12,14 @@ logger = logging.getLogger("windy-capture.capture")
 
 
 async def capture_category(
-    browser: Browser,
+    context: BrowserContext,
     category: CategoryConfig,
     global_cfg: GlobalConfig,
     uploader: S3Uploader,
 ) -> None:
     logger.info("Starting capture for category: %s", category.name)
-    context = await browser.new_context(
-        viewport={"width": global_cfg.viewport_width, "height": global_cfg.viewport_height},
-        device_scale_factor=global_cfg.device_scale_factor,
-    )
+    page = await context.new_page()
     try:
-        page = await context.new_page()
         await page.goto(category.url, wait_until="load", timeout=60000)
         await page.wait_for_selector("canvas.maplibregl-canvas", timeout=30000)
         await asyncio.sleep(global_cfg.wait_after_load_seconds)
@@ -68,4 +64,4 @@ async def capture_category(
         logger.exception("Capture failed for category: %s", category.name)
         raise
     finally:
-        await context.close()
+        await page.close()

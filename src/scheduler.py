@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
+from typing import Dict
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from playwright.async_api import Browser
+from playwright.async_api import BrowserContext
 
 from src.capture import capture_category
 from src.config import Config
@@ -24,7 +25,7 @@ def next_aligned_time(interval_minutes: int) -> datetime:
 
 def build_scheduler(
     config: Config,
-    browser: Browser,
+    contexts: Dict[str, BrowserContext],
     uploader: S3Uploader,
 ) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler()
@@ -37,7 +38,7 @@ def build_scheduler(
             capture_category,
             trigger="interval",
             minutes=category.schedule_interval_minutes,
-            args=[browser, category, config.global_, uploader],
+            args=[contexts[category.name], category, config.global_, uploader],
             id=f"capture_{category.name}",
             max_instances=1,
             next_run_time=first_run,

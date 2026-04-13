@@ -19,15 +19,26 @@ async def main() -> None:
     uploader = S3Uploader(bucket=config.s3.bucket, prefix=config.s3.prefix)
 
     logger.info("Starting Windy capture service")
-    logger.info(
-        "Categories: %s",
-        [c.name for c in config.categories if c.enabled],
-    )
+    enabled = [c for c in config.categories if c.enabled]
+    logger.info("Categories: %s", [c.name for c in enabled])
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
         logger.info("Browser launched")
-        scheduler = build_scheduler(config, browser, uploader)
+
+        # Create one persistent context per category (keeps HTTP cache between runs)
+        contexts = {}
+        for cat in enabled:
+            contexts[cat.name] = await browser.new_context(
+                viewport={
+                    "width": config.global_.viewport_width,
+                    "height": config.global_.viewport_height,
+                },
+                device_scale_factor=config.global_.device_scale_factor,
+            )
+            logger.info("Created persistent context for %s", cat.name)
+
+        scheduler = build_scheduler(config, contexts, uploader)
         try:
             scheduler.start()
             logger.info("Scheduler started. Press Ctrl+C to stop.")
@@ -36,6 +47,9 @@ async def main() -> None:
         finally:
             logger.info("Shutting down scheduler...")
             scheduler.shutdown()
+            for name, ctx in contexts.items():
+                await ctx.close()
+                logger.info("Closed context for %s", name)
             await browser.close()
             logger.info("Browser closed")
 
