@@ -32,31 +32,38 @@ async def capture_category(
         date_str = now.strftime("%Y-%m-%d")
         timestamp = now.strftime("%H-%M-%S")
 
-        # Always capture one static frame
-        static_bytes = await page.locator("canvas.maplibregl-canvas").screenshot()
-        key = uploader.upload_static(static_bytes, category=category.name, timestamp=timestamp, date_str=date_str)
-        logger.info("Uploaded static frame: %s", key)
-
-        # Detect animation and capture burst if needed
+        # --- Capture phase: detect animation & burst first, static last ---
+        # is_animated + burst frames give the page extra rendering time
+        # before the static screenshot, avoiding partial-render captures.
         animated = await is_animated(page, global_cfg.animation_detection_threshold)
+        burst_frames: list[bytes] = []
         if animated:
             logger.info("Animation detected for %s, capturing %d frames", category.name, category.animation_frames)
-            frames = await capture_burst_frames(
+            burst_frames = await capture_burst_frames(
                 page,
                 num_frames=category.animation_frames,
                 interval_ms=category.animation_frame_interval_ms,
             )
-            for i, frame_bytes in enumerate(frames, start=1):
-                uploader.upload_frame(
-                    frame_bytes,
-                    category=category.name,
-                    timestamp=timestamp,
-                    frame_num=i,
-                    date_str=date_str,
-                )
-            logger.info("Uploaded %d frames for %s", len(frames), category.name)
         else:
             logger.info("No animation detected for %s", category.name)
+
+        # Static captured last — page has had the most time to render
+        static_bytes = await page.locator("canvas.maplibregl-canvas").screenshot()
+
+        # --- Upload phase: all screenshots done, safe to block ---
+        key = uploader.upload_static(static_bytes, category=category.name, timestamp=timestamp, date_str=date_str)
+        logger.info("Uploaded static frame: %s", key)
+
+        for i, frame_bytes in enumerate(burst_frames, start=1):
+            uploader.upload_frame(
+                frame_bytes,
+                category=category.name,
+                timestamp=timestamp,
+                frame_num=i,
+                date_str=date_str,
+            )
+        if burst_frames:
+            logger.info("Uploaded %d frames for %s", len(burst_frames), category.name)
     except Exception:
         logger.exception("Capture failed for category: %s", category.name)
         raise

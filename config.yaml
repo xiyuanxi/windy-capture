@@ -12,21 +12,21 @@ s3:
 categories:
   - name: radar
     enabled: true
-    url: "https://www.windy.com/-Radar/radar?42.792,-80.753,7"
+    url: "https://www.windy.com/-Weather-radar-radar?radar,42.792,-80.753,7"
     schedule_interval_minutes: 5
     animation_frames: 12
-    animation_frame_interval_ms: 500
+    animation_frame_interval_ms: 300
 
   - name: satellite
     enabled: true
-    url: "https://www.windy.com/-Satellite/satellite?42.792,-80.753,7"
-    schedule_interval_minutes: 10
-    animation_frames: 8
-    animation_frame_interval_ms: 600
+    url: "https://www.windy.com/-Satellite-satellite?satellite,42.792,-80.753,7"
+    schedule_interval_minutes: 5
+    animation_frames: 1
+    animation_frame_interval_ms: 300
 
   - name: wind
     enabled: true
-    url: "https://www.windy.com/-Wind/wind?42.792,-80.753,7"
+    url: "https://www.windy.com/?42.792,-80.753,7"
     schedule_interval_minutes: 5
-    animation_frames: 10
-    animation_frame_interval_ms: 500
+    animation_frames: 20
+    animation_frame_interval_ms: 100
