@@ -7,7 +7,7 @@ global:
   storage_state: "auth/windy-state.json"
 
 s3:
-  bucket: "virtual-trading-995370108639-us-east-2-an"
+  bucket: "inno-virtual-trading"
   prefix: "windy-capture"
 
 categories:
