@@ -29,18 +29,28 @@ async def wait_until_stable(
     Takes screenshots at *interval* seconds apart. Once *stable_count*
     consecutive comparisons show less than *threshold* % pixel change,
     the canvas is considered stable.  Gives up after *timeout* seconds.
+    Screenshot failures are tolerated — the check is best-effort.
     """
     import logging
     logger = logging.getLogger("windy-capture.animation")
 
-    prev = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
+    try:
+        prev = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
+    except Exception:
+        logger.warning("wait_until_stable: initial screenshot failed, skipping stability check")
+        return
+
     consecutive = 0
     elapsed = 0.0
 
     while elapsed < timeout:
         await asyncio.sleep(interval)
         elapsed += interval
-        curr = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
+        try:
+            curr = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
+        except Exception:
+            logger.warning("wait_until_stable: screenshot failed at %.1fs, skipping", elapsed)
+            continue
         ratio = compute_pixel_diff_ratio(prev, curr)
         logger.debug("stability check: %.2f%% changed (need %d more stable)", ratio, stable_count - consecutive)
         if ratio < threshold:

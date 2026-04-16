@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Dict
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -30,10 +30,11 @@ def build_scheduler(
 ) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler()
 
-    for category in config.categories:
-        if not category.enabled:
-            continue
-        first_run = next_aligned_time(category.schedule_interval_minutes)
+    # Stagger jobs by 30 seconds each to avoid CPU contention on small instances
+    STAGGER_SECONDS = 30
+
+    for idx, category in enumerate(c for c in config.categories if c.enabled):
+        first_run = next_aligned_time(category.schedule_interval_minutes) + timedelta(seconds=idx * STAGGER_SECONDS)
         scheduler.add_job(
             capture_category,
             trigger="interval",
