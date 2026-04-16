@@ -45,7 +45,7 @@ async def capture_category(
             logger.info("No animation detected for %s", category.name)
 
         # Static captured last — page has had the most time to render
-        static_bytes = await page.locator("canvas.maplibregl-canvas").screenshot()
+        static_bytes = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
 
         # --- Upload phase: all screenshots done, safe to block ---
         key = uploader.upload_static(static_bytes, category=category.name, timestamp=timestamp, date_str=date_str)

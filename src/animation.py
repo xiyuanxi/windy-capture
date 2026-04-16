@@ -33,14 +33,14 @@ async def wait_until_stable(
     import logging
     logger = logging.getLogger("windy-capture.animation")
 
-    prev = await page.locator("canvas.maplibregl-canvas").screenshot()
+    prev = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
     consecutive = 0
     elapsed = 0.0
 
     while elapsed < timeout:
         await asyncio.sleep(interval)
         elapsed += interval
-        curr = await page.locator("canvas.maplibregl-canvas").screenshot()
+        curr = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
         ratio = compute_pixel_diff_ratio(prev, curr)
         logger.debug("stability check: %.2f%% changed (need %d more stable)", ratio, stable_count - consecutive)
         if ratio < threshold:
@@ -57,9 +57,9 @@ async def wait_until_stable(
 
 async def is_animated(page, threshold: float) -> bool:
     """Return True if the canvas is animating (pixel diff ratio exceeds threshold)."""
-    frame1 = await page.locator("canvas.maplibregl-canvas").screenshot()
+    frame1 = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
     await asyncio.sleep(0.3)
-    frame2 = await page.locator("canvas.maplibregl-canvas").screenshot()
+    frame2 = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
     ratio = compute_pixel_diff_ratio(frame1, frame2)
     return bool(ratio > threshold)
 
@@ -68,7 +68,7 @@ async def capture_burst_frames(page, num_frames: int, interval_ms: int) -> List[
     """Capture num_frames screenshots with interval_ms between each."""
     frames = []
     for _ in range(num_frames):
-        frame = await page.locator("canvas.maplibregl-canvas").screenshot()
+        frame = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
         frames.append(frame)
         await asyncio.sleep(interval_ms / 1000.0)
     return frames
