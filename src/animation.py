@@ -17,6 +17,44 @@ def compute_pixel_diff_ratio(img1_bytes: bytes, img2_bytes: bytes) -> float:
     return (changed / total) * 100.0
 
 
+async def wait_until_stable(
+    page,
+    threshold: float = 0.1,
+    interval: float = 1.0,
+    stable_count: int = 2,
+    timeout: float = 30.0,
+) -> None:
+    """Wait until the canvas stops changing (all layers fully rendered).
+
+    Takes screenshots at *interval* seconds apart. Once *stable_count*
+    consecutive comparisons show less than *threshold* % pixel change,
+    the canvas is considered stable.  Gives up after *timeout* seconds.
+    """
+    import logging
+    logger = logging.getLogger("windy-capture.animation")
+
+    prev = await page.locator("canvas.maplibregl-canvas").screenshot()
+    consecutive = 0
+    elapsed = 0.0
+
+    while elapsed < timeout:
+        await asyncio.sleep(interval)
+        elapsed += interval
+        curr = await page.locator("canvas.maplibregl-canvas").screenshot()
+        ratio = compute_pixel_diff_ratio(prev, curr)
+        logger.debug("stability check: %.2f%% changed (need %d more stable)", ratio, stable_count - consecutive)
+        if ratio < threshold:
+            consecutive += 1
+            if consecutive >= stable_count:
+                logger.info("Canvas stable after %.1fs", elapsed)
+                return
+        else:
+            consecutive = 0
+        prev = curr
+
+    logger.warning("Canvas did not stabilise within %.0fs, proceeding anyway", timeout)
+
+
 async def is_animated(page, threshold: float) -> bool:
     """Return True if the canvas is animating (pixel diff ratio exceeds threshold)."""
     frame1 = await page.locator("canvas.maplibregl-canvas").screenshot()

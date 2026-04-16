@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from playwright.async_api import BrowserContext
 
-from src.animation import capture_burst_frames, is_animated
+from src.animation import capture_burst_frames, is_animated, wait_until_stable
 from src.config import CategoryConfig, GlobalConfig
 from src.uploader import S3Uploader
 
@@ -23,6 +23,7 @@ async def capture_category(
         await page.goto(category.url, wait_until="load", timeout=60000)
         await page.wait_for_selector("canvas.maplibregl-canvas", timeout=30000)
         await asyncio.sleep(global_cfg.wait_after_load_seconds)
+        await wait_until_stable(page)
 
         now = datetime.now(timezone.utc)
         date_str = now.strftime("%Y-%m-%d")

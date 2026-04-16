@@ -10,6 +10,7 @@ class GlobalConfig:
     viewport_width: int = 1920
     viewport_height: int = 1080
     device_scale_factor: float = 1.0
+    storage_state: str = ""
 
 
 @dataclass
@@ -49,6 +50,7 @@ def load_config(path: str = "config.yaml") -> Config:
         viewport_width=g.get("viewport_width", 1920),
         viewport_height=g.get("viewport_height", 1080),
         device_scale_factor=g.get("device_scale_factor", 1.0),
+        storage_state=g.get("storage_state", ""),
     )
 
     s = data["s3"]

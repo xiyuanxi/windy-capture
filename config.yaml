@@ -4,6 +4,7 @@ global:
   viewport_width: 1920
   viewport_height: 1080
   device_scale_factor: 1.0
+  storage_state: "auth/windy-state.json"
 
 s3:
   bucket: "virtual-trading-995370108639-us-east-2-an"
@@ -26,7 +27,8 @@ categories:
 
   - name: wind
     enabled: true
-    url: "https://www.windy.com/?42.792,-80.753,7"
+#    url: "https://www.windy.com/?42.792,-80.753,7"
+    url: "https://www.windy.com/?45.603,-80.939,5,i:pressure,p:wind"
     schedule_interval_minutes: 5
     animation_frames: 20
     animation_frame_interval_ms: 100

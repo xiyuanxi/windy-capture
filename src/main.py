@@ -22,6 +22,16 @@ async def main() -> None:
     enabled = [c for c in config.categories if c.enabled]
     logger.info("Categories: %s", [c.name for c in enabled])
 
+    # Resolve storage state path (if configured)
+    storage_state = config.global_.storage_state or None
+    if storage_state:
+        import os
+        if not os.path.isfile(storage_state):
+            logger.warning("storage_state file not found: %s — starting without login", storage_state)
+            storage_state = None
+        else:
+            logger.info("Using storage state: %s", storage_state)
+
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
         logger.info("Browser launched")
@@ -35,6 +45,7 @@ async def main() -> None:
                     "height": config.global_.viewport_height,
                 },
                 device_scale_factor=config.global_.device_scale_factor,
+                storage_state=storage_state,
             )
             logger.info("Created persistent context for %s", cat.name)
 
