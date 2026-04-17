@@ -27,14 +27,6 @@ async def capture_category(
     try:
         await page.goto(category.url, wait_until="load", timeout=60000)
         await page.wait_for_selector("canvas.maplibregl-canvas", timeout=30000)
-
-        # Wait for network to go quiet — ensures all map tiles (including
-        # overlay layers like satellite clouds) have finished downloading.
-        try:
-            await page.wait_for_load_state("networkidle", timeout=30000)
-        except Exception:
-            logger.warning("networkidle not reached within 30s for %s, proceeding anyway", category.name)
-
         await asyncio.sleep(global_cfg.wait_after_load_seconds)
 
         # Resolve canvas bbox once and reuse for all subsequent screenshots.
