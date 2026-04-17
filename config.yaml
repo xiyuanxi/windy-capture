@@ -15,7 +15,7 @@ categories:
     enabled: true
     url: "https://www.windy.com/-Weather-radar-radar?radar,42.792,-80.753,7"
     schedule_interval_minutes: 5
-    animation_frames: 12
+    animation_frames: 1
     animation_frame_interval_ms: 300
 
   - name: satellite

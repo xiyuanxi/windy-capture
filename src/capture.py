@@ -8,7 +8,6 @@ from src.animation import (
     canvas_screenshot,
     capture_burst_frames,
     get_canvas_bbox,
-    is_animated,
     wait_until_stable,
 )
 from src.config import CategoryConfig, GlobalConfig
@@ -41,26 +40,23 @@ async def capture_category(
         timestamp = now.strftime("%H-%M-%S")
 
         # Capture static immediately after stability — guaranteed even if
-        # animation detection / burst capture fails later.
+        # burst capture fails later.
         static_bytes = await canvas_screenshot(page, bbox)
 
-        # Animation detection + burst frames are best-effort; failures here
-        # should not prevent the static upload.
+        # Burst frames driven by config (animation_frames > 1). Best-effort —
+        # failures here should not prevent the static upload.
         burst_frames: list[bytes] = []
-        try:
-            animated = await is_animated(page, bbox, global_cfg.animation_detection_threshold)
-            if animated:
-                logger.info("Animation detected for %s, capturing %d frames", category.name, category.animation_frames)
+        if category.animation_frames > 1:
+            try:
+                logger.info("Capturing %d burst frames for %s", category.animation_frames, category.name)
                 burst_frames = await capture_burst_frames(
                     page,
                     bbox,
                     num_frames=category.animation_frames,
                     interval_ms=category.animation_frame_interval_ms,
                 )
-            else:
-                logger.info("No animation detected for %s", category.name)
-        except Exception:
-            logger.exception("Burst capture failed for %s, continuing with static only", category.name)
+            except Exception:
+                logger.exception("Burst capture failed for %s, continuing with static only", category.name)
 
         # --- Upload phase: all screenshots done, safe to block ---
         key = uploader.upload_static(static_bytes, category=category.name, timestamp=timestamp, date_str=date_str)
