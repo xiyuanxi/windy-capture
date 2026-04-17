@@ -27,6 +27,7 @@ class CategoryConfig:
     schedule_interval_minutes: int = 5
     animation_frames: int = 10
     animation_frame_interval_ms: int = 500
+    extra_wait_seconds: int = 0
 
 
 @dataclass
@@ -72,6 +73,7 @@ def load_config(path: str = "config.yaml") -> Config:
             schedule_interval_minutes=c.get("schedule_interval_minutes", 5),
             animation_frames=c.get("animation_frames", 10),
             animation_frame_interval_ms=c.get("animation_frame_interval_ms", 500),
+            extra_wait_seconds=c.get("extra_wait_seconds", 0),
         ))
 
     return Config(global_=global_cfg, s3=s3_cfg, categories=categories)

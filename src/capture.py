@@ -41,6 +41,10 @@ async def capture_category(
         else:
             await wait_until_stable(page, bbox)
 
+        if category.extra_wait_seconds > 0:
+            logger.info("Extra wait %ds for %s", category.extra_wait_seconds, category.name)
+            await asyncio.sleep(category.extra_wait_seconds)
+
         now = datetime.now(timezone.utc)
         date_str = now.strftime("%Y-%m-%d")
         timestamp = now.strftime("%H-%M-%S")
