@@ -5,5 +5,5 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml
       - ./auth:/app/auth
-    shm_size: '1gb'
+    shm_size: '2gb'
     restart: unless-stopped
