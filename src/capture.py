@@ -4,7 +4,13 @@ from datetime import datetime, timezone
 
 from playwright.async_api import BrowserContext
 
-from src.animation import capture_burst_frames, is_animated, wait_until_stable
+from src.animation import (
+    canvas_screenshot,
+    capture_burst_frames,
+    get_canvas_bbox,
+    is_animated,
+    wait_until_stable,
+)
 from src.config import CategoryConfig, GlobalConfig
 from src.uploader import S3Uploader
 
@@ -23,7 +29,12 @@ async def capture_category(
         await page.goto(category.url, wait_until="load", timeout=60000)
         await page.wait_for_selector("canvas.maplibregl-canvas", timeout=30000)
         await asyncio.sleep(global_cfg.wait_after_load_seconds)
-        await wait_until_stable(page)
+
+        # Resolve canvas bbox once and reuse for all subsequent screenshots.
+        # Using page.screenshot(clip=bbox) avoids Locator.screenshot()'s
+        # element-stability check, which can hang on animated canvases.
+        bbox = await get_canvas_bbox(page)
+        await wait_until_stable(page, bbox)
 
         now = datetime.now(timezone.utc)
         date_str = now.strftime("%Y-%m-%d")
@@ -32,12 +43,13 @@ async def capture_category(
         # --- Capture phase: detect animation & burst first, static last ---
         # is_animated + burst frames give the page extra rendering time
         # before the static screenshot, avoiding partial-render captures.
-        animated = await is_animated(page, global_cfg.animation_detection_threshold)
+        animated = await is_animated(page, bbox, global_cfg.animation_detection_threshold)
         burst_frames: list[bytes] = []
         if animated:
             logger.info("Animation detected for %s, capturing %d frames", category.name, category.animation_frames)
             burst_frames = await capture_burst_frames(
                 page,
+                bbox,
                 num_frames=category.animation_frames,
                 interval_ms=category.animation_frame_interval_ms,
             )
@@ -45,7 +57,7 @@ async def capture_category(
             logger.info("No animation detected for %s", category.name)
 
         # Static captured last — page has had the most time to render
-        static_bytes = await page.locator("canvas.maplibregl-canvas").screenshot(timeout=60000)
+        static_bytes = await canvas_screenshot(page, bbox)
 
         # --- Upload phase: all screenshots done, safe to block ---
         key = uploader.upload_static(static_bytes, category=category.name, timestamp=timestamp, date_str=date_str)
