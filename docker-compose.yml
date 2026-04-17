@@ -5,4 +5,5 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml
       - ./auth:/app/auth
+    shm_size: '256m'
     restart: unless-stopped
