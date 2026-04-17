@@ -40,24 +40,27 @@ async def capture_category(
         date_str = now.strftime("%Y-%m-%d")
         timestamp = now.strftime("%H-%M-%S")
 
-        # --- Capture phase: detect animation & burst first, static last ---
-        # is_animated + burst frames give the page extra rendering time
-        # before the static screenshot, avoiding partial-render captures.
-        animated = await is_animated(page, bbox, global_cfg.animation_detection_threshold)
-        burst_frames: list[bytes] = []
-        if animated:
-            logger.info("Animation detected for %s, capturing %d frames", category.name, category.animation_frames)
-            burst_frames = await capture_burst_frames(
-                page,
-                bbox,
-                num_frames=category.animation_frames,
-                interval_ms=category.animation_frame_interval_ms,
-            )
-        else:
-            logger.info("No animation detected for %s", category.name)
-
-        # Static captured last — page has had the most time to render
+        # Capture static immediately after stability — guaranteed even if
+        # animation detection / burst capture fails later.
         static_bytes = await canvas_screenshot(page, bbox)
+
+        # Animation detection + burst frames are best-effort; failures here
+        # should not prevent the static upload.
+        burst_frames: list[bytes] = []
+        try:
+            animated = await is_animated(page, bbox, global_cfg.animation_detection_threshold)
+            if animated:
+                logger.info("Animation detected for %s, capturing %d frames", category.name, category.animation_frames)
+                burst_frames = await capture_burst_frames(
+                    page,
+                    bbox,
+                    num_frames=category.animation_frames,
+                    interval_ms=category.animation_frame_interval_ms,
+                )
+            else:
+                logger.info("No animation detected for %s", category.name)
+        except Exception:
+            logger.exception("Burst capture failed for %s, continuing with static only", category.name)
 
         # --- Upload phase: all screenshots done, safe to block ---
         key = uploader.upload_static(static_bytes, category=category.name, timestamp=timestamp, date_str=date_str)

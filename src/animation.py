@@ -30,7 +30,7 @@ async def get_canvas_bbox(page) -> dict:
     return bbox
 
 
-async def canvas_screenshot(page, bbox: dict, timeout: int = 15000) -> bytes:
+async def canvas_screenshot(page, bbox: dict, timeout: int = 60000) -> bytes:
     """Screenshot the canvas area using page.screenshot(clip=...).
 
     Unlike Locator.screenshot(), this skips Playwright's element-stability
@@ -55,7 +55,7 @@ async def wait_until_stable(
     Screenshot failures are tolerated — the check is best-effort.
     """
     try:
-        prev = await canvas_screenshot(page, bbox)
+        prev = await canvas_screenshot(page, bbox, timeout=30000)
     except Exception:
         logger.warning("wait_until_stable: initial screenshot failed, skipping stability check")
         return
@@ -67,7 +67,7 @@ async def wait_until_stable(
         await asyncio.sleep(interval)
         elapsed = time.monotonic() - start
         try:
-            curr = await canvas_screenshot(page, bbox)
+            curr = await canvas_screenshot(page, bbox, timeout=30000)
         except Exception:
             logger.warning("wait_until_stable: screenshot failed at %.1fs, skipping", elapsed)
             continue
