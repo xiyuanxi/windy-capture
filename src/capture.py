@@ -27,13 +27,27 @@ async def capture_category(
     try:
         await page.goto(category.url, wait_until="load", timeout=60000)
         await page.wait_for_selector("canvas.maplibregl-canvas", timeout=30000)
+
+        # Wait for network to go quiet — ensures all map tiles (including
+        # overlay layers like satellite clouds) have finished downloading.
+        try:
+            await page.wait_for_load_state("networkidle", timeout=30000)
+        except Exception:
+            logger.warning("networkidle not reached within 30s for %s, proceeding anyway", category.name)
+
         await asyncio.sleep(global_cfg.wait_after_load_seconds)
 
         # Resolve canvas bbox once and reuse for all subsequent screenshots.
         # Using page.screenshot(clip=bbox) avoids Locator.screenshot()'s
         # element-stability check, which can hang on animated canvases.
         bbox = await get_canvas_bbox(page)
-        await wait_until_stable(page, bbox)
+
+        # Skip stability check for animated categories — their canvas never
+        # stabilises, so we'd just waste the full timeout budget.
+        if category.animation_frames > 1:
+            logger.info("Skipping stability check for animated category %s", category.name)
+        else:
+            await wait_until_stable(page, bbox)
 
         now = datetime.now(timezone.utc)
         date_str = now.strftime("%Y-%m-%d")
