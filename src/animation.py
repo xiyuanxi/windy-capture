@@ -35,8 +35,9 @@ async def canvas_screenshot(page, bbox: dict, timeout: int = 60000) -> bytes:
 
     Unlike Locator.screenshot(), this skips Playwright's element-stability
     check, so it works reliably on continuously-animated canvases.
+    JPEG format is used for faster encoding and smaller pipe transfer.
     """
-    return await page.screenshot(clip=bbox, timeout=timeout)
+    return await page.screenshot(clip=bbox, timeout=timeout, type="jpeg", quality=85)
 
 
 async def wait_until_stable(
@@ -44,7 +45,7 @@ async def wait_until_stable(
     bbox: dict,
     threshold: float = 0.1,
     interval: float = 1.0,
-    stable_count: int = 2,
+    stable_count: int = 1,
     timeout: float = 30.0,
 ) -> None:
     """Wait until the canvas stops changing (all layers fully rendered).

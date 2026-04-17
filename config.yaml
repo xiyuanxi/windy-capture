@@ -1,5 +1,5 @@
 global:
-  wait_after_load_seconds: 12
+  wait_after_load_seconds: 5
   animation_detection_threshold: 0.5
   viewport_width: 1920
   viewport_height: 1080
