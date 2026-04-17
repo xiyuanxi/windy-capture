@@ -26,8 +26,15 @@ async def capture_category(
     page = await context.new_page()
     try:
         await page.goto(category.url, wait_until="load", timeout=60000)
-        await page.wait_for_selector("canvas.maplibregl-canvas", timeout=30000)
+        await page.wait_for_selector("canvas.maplibregl-canvas", timeout=60000)
         await asyncio.sleep(global_cfg.wait_after_load_seconds)
+
+        # extra_wait runs BEFORE stability check so that JS-triggered tile
+        # requests have time to start. Stability check then detects when
+        # those tiles finish loading (canvas stops changing).
+        if category.extra_wait_seconds > 0:
+            logger.info("Extra wait %ds for %s", category.extra_wait_seconds, category.name)
+            await asyncio.sleep(category.extra_wait_seconds)
 
         # Resolve canvas bbox once and reuse for all subsequent screenshots.
         # Using page.screenshot(clip=bbox) avoids Locator.screenshot()'s
@@ -40,10 +47,6 @@ async def capture_category(
             logger.info("Skipping stability check for animated category %s", category.name)
         else:
             await wait_until_stable(page, bbox)
-
-        if category.extra_wait_seconds > 0:
-            logger.info("Extra wait %ds for %s", category.extra_wait_seconds, category.name)
-            await asyncio.sleep(category.extra_wait_seconds)
 
         now = datetime.now(timezone.utc)
         date_str = now.strftime("%Y-%m-%d")
