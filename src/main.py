@@ -4,6 +4,7 @@ import logging
 from playwright.async_api import async_playwright
 
 from src.config import load_config
+from src.routing import install_request_blocker
 from src.scheduler import build_scheduler
 from src.uploader import S3Uploader
 
@@ -39,7 +40,7 @@ async def main() -> None:
         # Create one persistent context per category (keeps HTTP cache between runs)
         contexts = {}
         for cat in enabled:
-            contexts[cat.name] = await browser.new_context(
+            ctx = await browser.new_context(
                 viewport={
                     "width": config.global_.viewport_width,
                     "height": config.global_.viewport_height,
@@ -47,6 +48,8 @@ async def main() -> None:
                 device_scale_factor=config.global_.device_scale_factor,
                 storage_state=storage_state,
             )
+            await install_request_blocker(ctx)
+            contexts[cat.name] = ctx
             logger.info("Created persistent context for %s", cat.name)
 
         scheduler = build_scheduler(config, contexts, uploader)
