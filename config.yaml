@@ -25,7 +25,8 @@ categories:
     schedule_interval_minutes: 5
     animation_frames: 1
     animation_frame_interval_ms: 300
-    extra_wait_seconds: 5
+    extra_wait_seconds: 0
+    wait_for_loading: true
 
   - name: wind
     enabled: true

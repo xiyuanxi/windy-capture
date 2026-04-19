@@ -40,6 +40,44 @@ async def canvas_screenshot(page, bbox: dict, timeout: int = 60000) -> bytes:
     return await page.screenshot(clip=bbox, timeout=timeout, type="jpeg", quality=85)
 
 
+async def wait_until_changing(
+    page,
+    bbox: dict,
+    threshold: float = 0.1,
+    interval: float = 1.0,
+    timeout: float = 60.0,
+) -> bool:
+    """Wait until the canvas starts changing (overlay tiles begin loading).
+
+    Returns True if canvas started changing within timeout, False otherwise.
+    Used as phase-1 before wait_until_stable so we don't mistake a
+    not-yet-started load as a completed one.
+    """
+    try:
+        prev = await canvas_screenshot(page, bbox, timeout=30000)
+    except Exception:
+        logger.warning("wait_until_changing: initial screenshot failed")
+        return False
+
+    start = time.monotonic()
+    while time.monotonic() - start < timeout:
+        await asyncio.sleep(interval)
+        elapsed = time.monotonic() - start
+        try:
+            curr = await canvas_screenshot(page, bbox, timeout=30000)
+        except Exception:
+            logger.warning("wait_until_changing: screenshot failed at %.1fs", elapsed)
+            continue
+        ratio = compute_pixel_diff_ratio(prev, curr)
+        if ratio > threshold:
+            logger.info("Canvas started changing at %.1fs (%.2f%% diff)", elapsed, ratio)
+            return True
+        prev = curr
+
+    logger.warning("Canvas did not start changing within %.0fs", timeout)
+    return False
+
+
 async def wait_until_stable(
     page,
     bbox: dict,

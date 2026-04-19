@@ -8,6 +8,7 @@ from src.animation import (
     canvas_screenshot,
     capture_burst_frames,
     get_canvas_bbox,
+    wait_until_changing,
     wait_until_stable,
 )
 from src.config import CategoryConfig, GlobalConfig
@@ -46,6 +47,11 @@ async def capture_category(
         if category.animation_frames > 1:
             logger.info("Skipping stability check for animated category %s", category.name)
         else:
+            if category.wait_for_loading:
+                # Two-phase wait: first confirm tiles have started loading,
+                # then wait for them to finish. Prevents false-stable on
+                # slow CPUs where JS hasn't issued tile requests yet.
+                await wait_until_changing(page, bbox)
             await wait_until_stable(page, bbox)
 
         now = datetime.now(timezone.utc)
