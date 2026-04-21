@@ -17,7 +17,7 @@ categories:
     schedule_interval_minutes: 5
     animation_frames: 1
     animation_frame_interval_ms: 300
-    extra_wait_seconds: 0
+    extra_wait_seconds: 5
 
   - name: satellite
     enabled: true
@@ -25,7 +25,8 @@ categories:
     schedule_interval_minutes: 5
     animation_frames: 1
     animation_frame_interval_ms: 300
-    extra_wait_seconds: 5
+    extra_wait_seconds: 30
+    fresh_context: true
 
   - name: wind
     enabled: true

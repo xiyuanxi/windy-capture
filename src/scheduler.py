@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict
+from typing import Awaitable, Callable, Dict, Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from playwright.async_api import BrowserContext
@@ -17,16 +17,31 @@ _capture_lock = asyncio.Lock()
 
 
 async def capture_category_serialized(
-    context: BrowserContext,
+    context: Optional[BrowserContext],
+    context_factory: Callable[[], Awaitable[BrowserContext]],
     category: CategoryConfig,
     global_cfg: GlobalConfig,
     uploader: S3Uploader,
 ) -> None:
-    """Wrap capture_category with a shared lock so captures run one at a time."""
+    """Wrap capture_category with a shared lock so captures run one at a time.
+
+    If *context* is None, a fresh context is built per capture and closed
+    afterwards — used to bypass HTTP cache for categories that serve stale
+    tiles (e.g. satellite).
+    """
     if _capture_lock.locked():
         logger.info("Capture queued for %s (another capture in progress)", category.name)
     async with _capture_lock:
-        await capture_category(context, category, global_cfg, uploader)
+        if context is None:
+            logger.info("Building fresh context for %s", category.name)
+            ctx = await context_factory()
+            try:
+                await capture_category(ctx, category, global_cfg, uploader)
+            finally:
+                await ctx.close()
+                logger.info("Closed fresh context for %s", category.name)
+        else:
+            await capture_category(context, category, global_cfg, uploader)
 
 
 def next_aligned_time(interval_minutes: int) -> datetime:
@@ -45,7 +60,8 @@ def next_aligned_time(interval_minutes: int) -> datetime:
 
 def build_scheduler(
     config: Config,
-    contexts: Dict[str, BrowserContext],
+    contexts: Dict[str, Optional[BrowserContext]],
+    context_factory: Callable[[], Awaitable[BrowserContext]],
     uploader: S3Uploader,
 ) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler()
@@ -60,7 +76,7 @@ def build_scheduler(
             capture_category_serialized,
             trigger="interval",
             minutes=category.schedule_interval_minutes,
-            args=[contexts[category.name], category, config.global_, uploader],
+            args=[contexts[category.name], context_factory, category, config.global_, uploader],
             id=f"capture_{category.name}",
             max_instances=1,
             next_run_time=first_run,

@@ -37,9 +37,7 @@ async def main() -> None:
         browser = await pw.chromium.launch(headless=True)
         logger.info("Browser launched")
 
-        # Create one persistent context per category (keeps HTTP cache between runs)
-        contexts = {}
-        for cat in enabled:
+        async def build_context():
             ctx = await browser.new_context(
                 viewport={
                     "width": config.global_.viewport_width,
@@ -49,10 +47,20 @@ async def main() -> None:
                 storage_state=storage_state,
             )
             await install_request_blocker(ctx)
-            contexts[cat.name] = ctx
-            logger.info("Created persistent context for %s", cat.name)
+            return ctx
 
-        scheduler = build_scheduler(config, contexts, uploader)
+        # fresh_context=True categories skip preallocation — a new context is
+        # built per capture to bypass HTTP cache (e.g. satellite stale tiles).
+        contexts = {}
+        for cat in enabled:
+            if cat.fresh_context:
+                contexts[cat.name] = None
+                logger.info("Using fresh context per capture for %s", cat.name)
+            else:
+                contexts[cat.name] = await build_context()
+                logger.info("Created persistent context for %s", cat.name)
+
+        scheduler = build_scheduler(config, contexts, build_context, uploader)
         try:
             scheduler.start()
             logger.info("Scheduler started. Press Ctrl+C to stop.")
@@ -62,8 +70,9 @@ async def main() -> None:
             logger.info("Shutting down scheduler...")
             scheduler.shutdown()
             for name, ctx in contexts.items():
-                await ctx.close()
-                logger.info("Closed context for %s", name)
+                if ctx is not None:
+                    await ctx.close()
+                    logger.info("Closed context for %s", name)
             await browser.close()
             logger.info("Browser closed")
 

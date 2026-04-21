@@ -28,6 +28,7 @@ class CategoryConfig:
     animation_frames: int = 10
     animation_frame_interval_ms: int = 500
     extra_wait_seconds: int = 0
+    fresh_context: bool = False
 
 
 @dataclass
@@ -74,6 +75,7 @@ def load_config(path: str = "config.yaml") -> Config:
             animation_frames=c.get("animation_frames", 10),
             animation_frame_interval_ms=c.get("animation_frame_interval_ms", 500),
             extra_wait_seconds=c.get("extra_wait_seconds", 0),
+            fresh_context=c.get("fresh_context", False),
         ))
 
     return Config(global_=global_cfg, s3=s3_cfg, categories=categories)
